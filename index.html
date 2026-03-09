@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Lucky Spin & Win</title>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lucky Spin & Win</title>
+
+<!-- Vercel Analytics -->
+<script defer src="https://static.vercel-insights.com/v1/script.js"></script>
 
 <style>
-
 body{
 font-family:Arial;
 text-align:center;
 background:linear-gradient(45deg,#ff416c,#ff4b2b);
 color:white;
+margin:0;
+padding:0;
 }
+
+h1{margin-top:20px;}
 
 .container{
 position:relative;
@@ -40,13 +47,21 @@ transform:translateX(-50%);
 }
 
 button{
-margin-top:10px;
+margin-top:15px;
 padding:12px 30px;
 font-size:18px;
 border:none;
 border-radius:8px;
 background:#00c853;
 color:white;
+cursor:pointer;
+}
+
+button:hover{background:#00a844;}
+
+.counter{
+margin-top:10px;
+font-size:18px;
 }
 
 #result{
@@ -54,39 +69,6 @@ margin-top:15px;
 font-size:22px;
 font-weight:bold;
 }
-
-input{
-padding:10px;
-margin:5px;
-width:220px;
-border-radius:6px;
-border:none;
-}
-
-.formbox{
-display:none;
-margin-top:15px;
-}
-
-.popup{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.7);
-}
-
-.popupbox{
-background:white;
-color:black;
-padding:20px;
-margin:150px auto;
-width:260px;
-border-radius:10px;
-}
-
 </style>
 </head>
 
@@ -96,156 +78,93 @@ border-radius:10px;
 
 <p>Free Spins Left: <span id="spins"></span></p>
 
+<div class="counter">
+📲 Shares Completed: <span id="shareCount">0</span>/5
+</div>
+
 <div class="container">
-
 <div class="pointer"></div>
-
 <canvas id="wheel" width="320" height="320"></canvas>
-
 </div>
 
 <button onclick="spin()">SPIN NOW</button>
-
 <div id="result"></div>
 
-<div class="formbox" id="claim">
-
-<h3>Claim Reward</h3>
-
-<input placeholder="Your Name"><br>
-<input placeholder="UPI ID"><br>
-<input placeholder="Email"><br>
-
-<button onclick="submitReward()">Submit</button>
-
-</div>
-
-<div class="popup" id="sharePopup">
-
-<div class="popupbox">
-
-<h3>Share & Get Reward 🎉</h3>
-
-<p>Share with friends to receive your reward.</p>
-
-<button onclick="share()">Share on WhatsApp</button>
-
-</div>
-
-</div>
-
 <script>
-
-let rewards=[
-"₹10",
-"₹20",
-"₹50",
-"TRY AGAIN",
-"FREE GIFT",
-"₹100"
-];
+let rewards=["₹10","₹20","₹50","TRY AGAIN","FREE GIFT","₹100"];
 
 let spins=localStorage.getItem("spins");
-
-if(spins===null){
-
-spins=3;
-
-localStorage.setItem("spins",3);
-
-}
-
+if(spins===null){spins=3;localStorage.setItem("spins",3);}
+spins=parseInt(spins);
 document.getElementById("spins").innerHTML=spins;
 
-let arc=Math.PI/(rewards.length/2);
+let shareCount=localStorage.getItem("shares");
+if(shareCount===null){shareCount=0;localStorage.setItem("shares",0);}
+shareCount=parseInt(shareCount);
+document.getElementById("shareCount").innerHTML=shareCount;
 
+let arc=Math.PI/(rewards.length/2);
 let ctx=document.getElementById("wheel").getContext("2d");
 
 function drawWheel(){
-
 ctx.clearRect(0,0,320,320);
-
-ctx.font="bold 16px Arial";
+ctx.font="bold 18px Arial";
 ctx.textAlign="center";
+ctx.textBaseline="middle";
 
 for(let i=0;i<rewards.length;i++){
-
 let angle=i*arc;
-
 ctx.fillStyle=i%2==0?"#ffeb3b":"#ff9800";
-
 ctx.beginPath();
 ctx.arc(160,160,160,angle,angle+arc,false);
 ctx.arc(160,160,0,angle+arc,angle,true);
 ctx.fill();
 
 ctx.save();
-
 ctx.fillStyle="black";
-
 let x=160+Math.cos(angle+arc/2)*100;
 let y=160+Math.sin(angle+arc/2)*100;
-
 ctx.translate(x,y);
-
 ctx.rotate(angle+arc/2+Math.PI/2);
-
 ctx.fillText(rewards[i],0,0);
-
 ctx.restore();
-
 }
-
 }
 
 drawWheel();
 
 function spin(){
-
-if(spins<=0){
-
-alert("No spins left");
-
-return;
-
-}
-
+if(spins<=0){alert("No spins left. Share to unlock."); return;}
 spins--;
-
 localStorage.setItem("spins",spins);
-
 document.getElementById("spins").innerHTML=spins;
 
 let spinAngle=Math.floor(Math.random()*360)+720;
-
 document.getElementById("wheel").style.transform="rotate("+spinAngle+"deg)";
 
 let win=rewards[Math.floor(Math.random()*rewards.length)];
 
 setTimeout(function(){
-
-document.getElementById("result").innerHTML="🎉 You Won: "+win;
-
-document.getElementById("claim").style.display="block";
-
+if(win=="TRY AGAIN"){document.getElementById("result").innerHTML="❌ Better Luck Next Time";}
+else{document.getElementById("result").innerHTML="🎉 You Won: "+win;}
 },4000);
-
-}
-
-function submitReward(){
-
-document.getElementById("sharePopup").style.display="block";
-
 }
 
 function share(){
-
+if(shareCount>=5){alert("Maximum shares completed"); return;}
 let url=encodeURIComponent(window.location.href);
-
 window.open("https://wa.me/?text=Try%20this%20Lucky%20Spin%20Game%20"+url);
 
-}
+shareCount++;
+spins++;
+localStorage.setItem("shares",shareCount);
+localStorage.setItem("spins",spins);
 
+document.getElementById("shareCount").innerHTML=shareCount;
+document.getElementById("spins").innerHTML=spins;
+
+if(shareCount==5){alert("🎉 Sharing Completed! Extra spins unlocked.");}
+}
 </script>
 
 </body>
